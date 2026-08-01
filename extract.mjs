@@ -1,8 +1,8 @@
 // pull real tokenURI SVGs off an in-process chain and save them for visual check
 import { readFileSync, writeFileSync } from "fs";
 import { createRequire } from "module";
-const reqHere=createRequire(import.meta.url), reqCash=createRequire("C:/Users/Bia/New folder/cashcat-printer/");
-const ganache=reqHere("ganache"), ethers=reqCash("ethers");
+const reqHere=createRequire(import.meta.url);
+const ganache=reqHere("ganache"), ethers=reqHere("ethers");
 const load=n=>JSON.parse(readFileSync("./out/"+n+".json","utf8"));
 const Guns=load("WickGuns"), Art=load("WickGunArt"), Bodies=load("WickGunBodies");
 const provider=new ethers.BrowserProvider(ganache.provider({logging:{quiet:true},wallet:{totalAccounts:3,defaultBalance:100000}}));
