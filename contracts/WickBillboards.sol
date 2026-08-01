@@ -45,7 +45,13 @@ contract WickBillboards {
     uint24 color;         // 0xRRGGBB accent
     string name;          // <=20 chars — the big line
     string tag;           // <=28 chars — the small line
-    string url;           // <=32 chars — shown as the domain line
+    string url;           // <=32 chars — the clickable link line
+    // 16x16 one-bit logo, row-major, bit 255 = top-left. Deliberately ON-CHAIN
+    // and immutable: an off-chain image URL could be swapped to anything after
+    // the ad is approved, and would drag CORS + arbitrary remote loads into the
+    // game. 256 bits costs one slot and can never bait-and-switch. 0 = no logo,
+    // and the house Pepe stands in that space instead.
+    uint256 logo;
   }
   Ad[] public ads;                                  // id = index
   mapping(uint32 => uint256[]) private _dayAds;     // day -> ad ids
@@ -74,7 +80,7 @@ contract WickBillboards {
 
   function todayId() public view returns (uint32) { return uint32(block.timestamp / 1 days); }
 
-  function buy(uint32 day, bool exclusive, string calldata name_, string calldata tag_, string calldata url_, uint24 color)
+  function buy(uint32 day, bool exclusive, string calldata name_, string calldata tag_, string calldata url_, uint24 color, uint256 logo)
     external payable nonReentrant returns (uint256 id)
   {
     require(day >= todayId(), "day already over");
@@ -91,7 +97,7 @@ contract WickBillboards {
       require(msg.value == PRICE_DAY, "a day costs 1,000,000 PLS");
     }
     id = ads.length;
-    ads.push(Ad(msg.sender, day, exclusive, false, color, name_, tag_, url_));
+    ads.push(Ad(msg.sender, day, exclusive, false, color, name_, tag_, url_, logo));
     _dayAds[day].push(id);
     if (exclusive) exclusiveOf[day] = id + 1;
     // split in-tx: burn half, treasury half — nothing pools here except failed burns
@@ -105,15 +111,17 @@ contract WickBillboards {
   /// everything the renderers need for one day, in one call
   function adsOf(uint32 day) external view returns (
     address[] memory buyers, bool[] memory exclusives, bool[] memory banneds,
-    uint24[] memory colors, string[] memory names, string[] memory tags, string[] memory urls)
+    uint24[] memory colors, string[] memory names, string[] memory tags, string[] memory urls,
+    uint256[] memory logos)
   {
     uint256[] storage list = _dayAds[day];
     uint256 n = list.length;
     buyers=new address[](n); exclusives=new bool[](n); banneds=new bool[](n);
     colors=new uint24[](n); names=new string[](n); tags=new string[](n); urls=new string[](n);
+    logos=new uint256[](n);
     for (uint256 i=0;i<n;i++){ Ad storage a=ads[list[i]];
       buyers[i]=a.buyer; exclusives[i]=a.exclusive; banneds[i]=a.banned;
-      colors[i]=a.color; names[i]=a.name; tags[i]=a.tag; urls[i]=a.url; }
+      colors[i]=a.color; names[i]=a.name; tags[i]=a.tag; urls[i]=a.url; logos[i]=a.logo; }
   }
   function daySlots(uint32 day) external view returns (uint256 taken, bool exclusiveTaken) {
     return (_dayAds[day].length, exclusiveOf[day] != 0);

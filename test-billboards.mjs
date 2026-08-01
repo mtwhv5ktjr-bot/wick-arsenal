@@ -39,48 +39,51 @@ const bbAddr = await bb.getAddress();
 const today = Number(await bb.todayId());
 
 // ---- pricing enforced exactly ----
-await reverts(bb.connect(adv1).buy(today, false, "WICK DEX", "swap it all", "dex.example", 0x7cf9a5, { value: M - 1n }), "underpay regular");
-await reverts(bb.connect(adv1).buy(today, false, "WICK DEX", "swap it all", "dex.example", 0x7cf9a5, { value: M10 }), "overpay regular (wrong price)");
-await reverts(bb.connect(adv1).buy(today, true, "WICK DEX", "swap it all", "dex.example", 0x7cf9a5, { value: M }), "exclusive at regular price");
+await reverts(bb.connect(adv1).buy(today, false, "WICK DEX", "swap it all", "dex.example", 0x7cf9a5, 0n, { value: M - 1n }), "underpay regular");
+await reverts(bb.connect(adv1).buy(today, false, "WICK DEX", "swap it all", "dex.example", 0x7cf9a5, 0n, { value: M10 }), "overpay regular (wrong price)");
+await reverts(bb.connect(adv1).buy(today, true, "WICK DEX", "swap it all", "dex.example", 0x7cf9a5, 0n, { value: M }), "exclusive at regular price");
 
 // ---- regular buy: split lands in the SAME tx ----
 const tBefore = await bal(treasury.address);
 const dBefore = BigInt(await wick.balanceOf(DEAD));
-await (await bb.connect(adv1).buy(today, false, "WICK DEX", "swap it all", "dex.example", 0x7cf9a5, { value: M, ...GL })).wait();
+const LOGO=0x00003C007E00FF00FF00FF007E003C00n;   // a blob, round-tripped below
+ await (await bb.connect(adv1).buy(today, false, "WICK DEX", "swap it all", "dex.example", 0x7cf9a5, LOGO, { value: M, ...GL })).wait();
 eq(((await bal(treasury.address)) - tBefore).toString(), ethers.parseEther("500000").toString(), "treasury got exactly 50%");
 eq((BigInt(await wick.balanceOf(DEAD)) - dBefore).toString(), (ethers.parseEther("500000") * 1000n).toString(), "50% swapped+burned in-tx");
 eq((await bal(bbAddr)).toString(), "0", "contract holds nothing");
 
 // ---- content limits ----
-await reverts(bb.connect(adv2).buy(today, false, "", "x", "y", 0, { value: M }), "empty name");
-await reverts(bb.connect(adv2).buy(today, false, "123456789012345678901", "x", "y", 0, { value: M }), "name 21 chars");
-await reverts(bb.connect(adv2).buy(today, false, "ok", "12345678901234567890123456789", "y", 0, { value: M }), "tag 29 chars");
-await reverts(bb.connect(adv2).buy(today - 1, false, "ok", "x", "y", 0, { value: M }), "yesterday");
-await reverts(bb.connect(adv2).buy(today + 61, false, "ok", "x", "y", 0, { value: M }), "61 days ahead");
+await reverts(bb.connect(adv2).buy(today, false, "", "x", "y", 0, 0n, { value: M }), "empty name");
+await reverts(bb.connect(adv2).buy(today, false, "123456789012345678901", "x", "y", 0, 0n, { value: M }), "name 21 chars");
+await reverts(bb.connect(adv2).buy(today, false, "ok", "12345678901234567890123456789", "y", 0, 0n, { value: M }), "tag 29 chars");
+await reverts(bb.connect(adv2).buy(today - 1, false, "ok", "x", "y", 0, 0n, { value: M }), "yesterday");
+await reverts(bb.connect(adv2).buy(today + 61, false, "ok", "x", "y", 0, 0n, { value: M }), "61 days ahead");
 
 // ---- exclusive rules ----
 // today already has a regular ad → exclusive blocked
-await reverts(bb.connect(adv2).buy(today, true, "TAKEOVER", "all mine", "big.example", 0xff0000, { value: M10 }), "exclusive on a day with rotation ads");
+await reverts(bb.connect(adv2).buy(today, true, "TAKEOVER", "all mine", "big.example", 0xff0000, 0n, { value: M10 }), "exclusive on a day with rotation ads");
 // tomorrow: exclusive works, then EVERYTHING else is blocked
 const tmr = today + 1;
-await (await bb.connect(adv2).buy(tmr, true, "TAKEOVER", "all mine", "big.example", 0xff0000, { value: M10, ...GL })).wait();
+await (await bb.connect(adv2).buy(tmr, true, "TAKEOVER", "all mine", "big.example", 0xff0000, 0n, { value: M10, ...GL })).wait();
 const [taken, exTaken] = await bb.daySlots(tmr);
 ok(exTaken === true && Number(taken) === 1, "exclusive registered");
-await reverts(bb.connect(adv3).buy(tmr, false, "late", "x", "y", 0, { value: M }), "regular after exclusive");
-await reverts(bb.connect(adv3).buy(tmr, true, "late", "x", "y", 0, { value: M10 }), "second exclusive");
+await reverts(bb.connect(adv3).buy(tmr, false, "late", "x", "y", 0, 0n, { value: M }), "regular after exclusive");
+await reverts(bb.connect(adv3).buy(tmr, true, "late", "x", "y", 0, 0n, { value: M10 }), "second exclusive");
 
 // ---- day cap: 8 regulars max ----
 const d2 = today + 2;
-for (let i = 0; i < 7; i++) await (await bb.connect(adv3).buy(d2, false, "AD " + i, "slot " + i, "u" + i, i * 999, { value: M, ...GL })).wait();
-await (await bb.connect(adv1).buy(d2, false, "AD 7", "slot 7", "u7", 7, { value: M, ...GL })).wait();
-await reverts(bb.connect(adv2).buy(d2, false, "AD 8", "ninth", "u8", 8, { value: M }), "9th regular blocked");
-await reverts(bb.connect(adv2).buy(d2, true, "TAKEOVER", "x", "y", 0, { value: M10 }), "exclusive on a full day");
+for (let i = 0; i < 7; i++) await (await bb.connect(adv3).buy(d2, false, "AD " + i, "slot " + i, "u" + i, i * 999, 0n, { value: M, ...GL })).wait();
+await (await bb.connect(adv1).buy(d2, false, "AD 7", "slot 7", "u7", 7, 0n, { value: M, ...GL })).wait();
+await reverts(bb.connect(adv2).buy(d2, false, "AD 8", "ninth", "u8", 8, 0n, { value: M }), "9th regular blocked");
+await reverts(bb.connect(adv2).buy(d2, true, "TAKEOVER", "x", "y", 0, 0n, { value: M10 }), "exclusive on a full day");
 const [t2] = await bb.daySlots(d2); eq(t2, 8, "8/8 slots");
 
 // ---- adsOf view + ban ----
 const view = await bb.adsOf(d2);
 eq(view.names.length, 8, "adsOf returns all 8");
 eq(view.names[0], "AD 0", "content round-trips");
+ eq((await bb.adsOf(today)).logos[0], LOGO, "16x16 logo round-trips on-chain");
+ eq((await bb.adsOf(d2)).logos[0], 0n, "no logo = 0 (house Pepe stands there)");
 await reverts(bb.connect(adv1).setBanned(0, true), "non-owner ban");
 await (await bb.setBanned(0, true, GL)).wait();
 ok((await bb.adsOf(today)).banneds[0] === true, "ban flag serves");
@@ -91,7 +94,7 @@ const bad = await (await new ethers.ContractFactory(RevertArt.abi, RevertArt.byt
 const bb2 = await (await new ethers.ContractFactory(BB.abi, BB.bytecode, dep)
   .deploy(treasury.address, 5000, await bad.getAddress(), await wick.getAddress(), await wick.getAddress())).waitForDeployment();
 const t3 = await bal(treasury.address);
-await (await bb2.connect(adv1).buy(today, false, "RESILIENT", "x", "y", 0, { value: M, ...GL })).wait();
+await (await bb2.connect(adv1).buy(today, false, "RESILIENT", "x", "y", 0, 0n, { value: M, ...GL })).wait();
 eq((await bb2.burnPending()).toString(), ethers.parseEther("500000").toString(), "failed burn pooled");
 eq(((await bal(treasury.address)) - t3).toString(), ethers.parseEther("500000").toString(), "treasury still paid despite dead router");
 await reverts(bb2.burnPool(0), "crank on dead router reverts (funds stay)");
@@ -100,7 +103,7 @@ await reverts(bb2.burnPool(0), "crank on dead router reverts (funds stay)");
 const bb3 = await (await new ethers.ContractFactory(BB.abi, BB.bytecode, dep)
   .deploy(treasury.address, 10000, await router.getAddress(), await wick.getAddress(), await wick.getAddress())).waitForDeployment();
 const d4 = await bal(treasury.address); const dead4 = BigInt(await wick.balanceOf(DEAD));
-await (await bb3.connect(adv1).buy(today, false, "ALLBURN", "x", "y", 0, { value: M, ...GL })).wait();
+await (await bb3.connect(adv1).buy(today, false, "ALLBURN", "x", "y", 0, 0n, { value: M, ...GL })).wait();
 eq(((await bal(treasury.address)) - d4).toString(), "0", "100%-burn config: treasury gets 0");
 eq((BigInt(await wick.balanceOf(DEAD)) - dead4).toString(), (M * 1000n).toString(), "100%-burn config: full amount burned");
 

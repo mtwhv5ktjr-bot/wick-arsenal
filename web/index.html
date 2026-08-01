@@ -256,11 +256,22 @@
   <div class="row" style="flex-wrap:wrap;gap:8px;margin-bottom:10px">
     <input type="text" id="adName" maxlength="20" placeholder="headline (max 20)" style="width:180px">
     <input type="text" id="adTag" maxlength="28" placeholder="tagline (max 28)" style="width:220px">
-    <input type="text" id="adUrl" maxlength="32" placeholder="your site (max 32)" style="width:200px">
+    <input type="text" id="adUrl" maxlength="32" placeholder="yoursite.com (clickable, max 32)" style="width:220px">
   </div>
-  <div id="adPreview" style="max-width:380px;margin:0 0 12px;background:#060911;border:3px solid #7cf9a5;border-radius:11px;padding:12px 14px;box-shadow:0 0 22px rgba(124,249,165,.35)">
-    <div id="apName" style="font:900 19px Verdana;color:#7cf9a5">YOUR NAME HERE</div>
-    <div id="apTag" style="font:bold 11px Verdana;color:rgba(220,228,240,.72);margin-top:3px">your tagline here</div>
+  <div class="row" style="flex-wrap:wrap;gap:8px;margin-bottom:10px;align-items:center">
+    <label for="adLogoFile" style="cursor:pointer;border:2px dashed #2c3242;border-radius:9px;padding:9px 13px;font-size:13px">🖼 ADD YOUR LOGO <span class="muted">(optional)</span></label>
+    <input type="file" id="adLogoFile" accept="image/*" style="display:none">
+    <button id="adLogoClear" style="display:none">✖ remove logo</button>
+    <span class="muted" style="font-size:12px">any image → baked to a 16×16 on-chain sprite in your color. It replaces the Pepe standing on the board.</span>
+  </div>
+  <div id="adPreview" style="max-width:420px;margin:0 0 12px;background:#060911;border:3px solid #7cf9a5;border-radius:11px;padding:12px 14px;box-shadow:0 0 22px rgba(124,249,165,.35);display:flex;align-items:center;gap:12px">
+    <div style="flex:1;min-width:0">
+      <div id="apName" style="font:900 19px Verdana;color:#7cf9a5">YOUR NAME HERE</div>
+      <div id="apTag" style="font:bold 11px Verdana;color:rgba(220,228,240,.72);margin-top:3px">your tagline here</div>
+      <a id="apUrl" href="#" target="_blank" rel="noopener nofollow" style="font:bold 10px Verdana;color:#9fe6ff;margin-top:4px;display:none"></a>
+    </div>
+    <canvas id="apLogo" width="16" height="16" style="width:64px;height:64px;image-rendering:pixelated;display:none;flex:none"></canvas>
+    <div id="apPepe" style="font-size:38px;flex:none" title="the house Pepe stands here unless you add a logo">🐸</div>
   </div>
   <div class="row" style="flex-wrap:wrap;gap:8px">
     <button id="adBuy" class="primary">BUY THE DAY</button>
@@ -1034,13 +1045,55 @@ async function loadAdvertise(){
     syncAdForm();
   }catch(e){ avail.textContent="Couldn't read availability — refresh."; }
 }
+/* 🖼 LOGO: any image the buyer picks is baked to a 16×16 one-bit sprite (one
+   uint256) and stored ON-CHAIN. Deliberately not an image URL — a remote image
+   could be swapped to anything after approval and would pull arbitrary external
+   loads into the game. Immutable pixels can't bait-and-switch. */
+let adLogo=0n;
+function logoToBits(img){
+  const c=document.createElement("canvas"); c.width=16; c.height=16;
+  const x=c.getContext("2d",{willReadFrequently:true});
+  x.imageSmoothingEnabled=true; x.clearRect(0,0,16,16);
+  // contain-fit so nothing is cropped away
+  const s=Math.min(16/img.width,16/img.height), w=Math.max(1,Math.round(img.width*s)), h=Math.max(1,Math.round(img.height*s));
+  x.drawImage(img,Math.floor((16-w)/2),Math.floor((16-h)/2),w,h);
+  const d=x.getImageData(0,0,16,16).data;
+  // luminance+alpha threshold → ink. Auto-picks the polarity that inks 10–60%
+  const lum=[]; for(let i=0;i<256;i++){ const a=d[i*4+3]/255;
+    lum.push(a<0.35?null:(0.299*d[i*4]+0.587*d[i*4+1]+0.114*d[i*4+2])/255); }
+  const vals=lum.filter(v=>v!==null);
+  const mid=vals.length?vals.reduce((a,b)=>a+b,0)/vals.length:0.5;
+  const mk=dark=>{ let bits=0n,on=0;
+    for(let i=0;i<256;i++){ const v=lum[i];
+      const ink=v===null?false:(dark?v<mid:v>=mid);
+      if(ink){ bits|=(1n<<BigInt(255-i)); on++; } }
+    return {bits,on}; };
+  const a=mk(true), b=mk(false);
+  const score=r=>{ const f=r.on/256; return f<0.06||f>0.7?-1:1-Math.abs(f-0.3); };
+  return (score(a)>=score(b)?a:b).bits;
+}
+function drawLogoPreview(){
+  const cv=$("#apLogo"), pepe=$("#apPepe");
+  if(!adLogo){ cv.style.display="none"; pepe.style.display=""; $("#adLogoClear").style.display="none"; return; }
+  cv.style.display=""; pepe.style.display="none"; $("#adLogoClear").style.display="";
+  const x=cv.getContext("2d"); x.clearRect(0,0,16,16);
+  x.fillStyle=$("#adColor").value||"#7cf9a5";
+  for(let i=0;i<256;i++) if((adLogo>>BigInt(255-i))&1n) x.fillRect(i%16,Math.floor(i/16),1,1);
+}
 function syncAdForm(){
   const nm=($("#adName").value||"YOUR NAME HERE").toUpperCase();
-  const tg=$("#adTag").value||$("#adUrl").value||"your tagline here";
+  const tg=$("#adTag").value||"your tagline here";
   const col=$("#adColor").value||"#7cf9a5";
   $("#apName").textContent=nm.slice(0,20); $("#apName").style.color=col;
   $("#apTag").textContent=tg.slice(0,28);
+  // the link line — real and clickable in the preview
+  const raw=($("#adUrl").value||"").trim().slice(0,32);
+  const a=$("#apUrl");
+  if(raw){ a.style.display=""; a.textContent="▸ "+raw;
+    a.href=/^https?:\/\//i.test(raw)?raw:("https://"+raw); }
+  else a.style.display="none";
   const pv=$("#adPreview"); pv.style.borderColor=col; pv.style.boxShadow="0 0 22px "+col+"59";
+  drawLogoPreview();
   const exc=$("#adType").value==="exc";
   $("#adBuy").textContent=exc?"BUY THE TAKEOVER — 10,000,000 PLS":"BUY THE DAY — 1,000,000 PLS";
 }
@@ -1066,7 +1119,7 @@ async function buyBillboard(){
       +dayLabel(day)+" (UTC)\n\n\""+name+"\"\n\nPrice: "+fmt(price)+" PLS — 50% is burned as $WICK in this transaction, 50% funds development.\n"
       +"Content is subject to the house rules (abusive content = banned, no refund)."))return;
     toast("Confirm in your wallet…");
-    await (await sendBuffered(bbC,"buy",[day,exc,name,tag,url,color],{value:price})).wait();
+    await (await sendBuffered(bbC,"buy",[day,exc,name,tag,url,color,adLogo],{value:price})).wait();
     toast("📺 Booked! Your billboard runs "+dayLabel(day)+" — it goes live in-game within ~5 minutes of that day starting.");
     await loadAdvertise();
   }catch(e){ toast(e.shortMessage||e.reason||e.message||"purchase failed"); }
@@ -1452,6 +1505,18 @@ function init(){
   const ab=$("#adBuy"); if(ab)ab.onclick=buyBillboard;
   ["adName","adTag","adUrl","adColor","adType","adDay"].forEach(idn=>{ const el=$("#"+idn);
     if(el){ el.oninput=syncAdForm; el.onchange=syncAdForm; } });
+  const lf=$("#adLogoFile");
+  if(lf)lf.onchange=e=>{ const f=e.target.files&&e.target.files[0]; if(!f)return;
+    if(f.size>8*1024*1024)return toast("That image is huge — anything under 8MB is fine (it becomes 16×16 anyway).");
+    const img=new Image();
+    img.onload=()=>{ try{ adLogo=logoToBits(img); syncAdForm();
+        toast(adLogo?"Logo baked to a 16×16 on-chain sprite.":"That image came out blank — try one with more contrast."); }
+      catch(err){ toast("Couldn't read that image."); }
+      URL.revokeObjectURL(img.src); };
+    img.onerror=()=>{ toast("Couldn't read that image."); URL.revokeObjectURL(img.src); };
+    img.src=URL.createObjectURL(f); };
+  const lc=$("#adLogoClear");
+  if(lc)lc.onclick=()=>{ adLogo=0n; if(lf)lf.value=""; syncAdForm(); };
   $("#connect").onclick=connect;
   $("#mint").onclick=mint;
   $("#offMake").onclick=makeOffer;

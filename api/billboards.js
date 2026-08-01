@@ -11,7 +11,7 @@ const CHAIN = new Network("pulsechain", 369);
 const ABI = [
   "function todayId() view returns (uint32)",
   "function daySlots(uint32) view returns (uint256 taken, bool exclusiveTaken)",
-  "function adsOf(uint32) view returns (address[] buyers, bool[] exclusives, bool[] banneds, uint24[] colors, string[] names, string[] tags, string[] urls)",
+  "function adsOf(uint32) view returns (address[] buyers, bool[] exclusives, bool[] banneds, uint24[] colors, string[] names, string[] tags, string[] urls, uint256[] logos)",
 ];
 
 // tiny in-instance cache — the game polls this and ad days change rarely
@@ -45,6 +45,8 @@ export default async function handler(req, res) {
         url: String(v.urls[i]).slice(0, 32),
         color: "#" + Number(v.colors[i]).toString(16).padStart(6, "0"),
         exclusive: v.exclusives[i],
+        // 16x16 one-bit sprite as a 64-char hex string (0 = none, house Pepe stands there)
+        logo: v.logos[i] ? BigInt(v.logos[i]).toString(16).padStart(64, "0") : null,
       });
     }
     const [taken, exTaken] = await bb.daySlots(day);
