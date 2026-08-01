@@ -5,7 +5,10 @@
   "type": "module",
   "scripts": {
     "compile": "node compile.mjs",
-    "test": "node test.mjs && node qa-crypto.mjs && node test-mods.mjs && node test-mods-market.mjs && node test-billboards.mjs",
+    "abi": "node gen-abi.mjs",
+    "test": "node gen-abi.mjs --check && node test.mjs && node qa-crypto.mjs && node test-mods.mjs && node test-mods-market.mjs && node test-billboards.mjs",
+    "check-abi": "node check-abi.mjs",
+    "stale": "node stale-listings.mjs",
     "deploy": "node deploy.mjs"
   },
   "dependencies": {
