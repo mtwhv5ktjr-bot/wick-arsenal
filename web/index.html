@@ -217,8 +217,9 @@
   <div class="row" style="margin-bottom:10px;flex-wrap:wrap">
     <input type="text" id="offAmt" placeholder="amount in PLS" style="width:150px">
     <input type="number" id="offTok" min="0" max="101" placeholder="gun # (0 = any)" style="width:150px">
+    <select id="offTier" style="width:210px"><option value="0">any gun — no specific model</option></select>
     <button id="offMake" class="primary">MAKE OFFER</button>
-    <span class="muted" id="offNote">Leave the gun # at 0 to bid on anything.</span>
+    <span class="muted" id="offNote">Bid on one gun by number, or on a whole model — not both.</span>
   </div>
   <div class="lb" id="offBox">
     <table>
@@ -1372,6 +1373,31 @@ async function loadOffers(){
   });
 }
 
+/* TIER BIDS — "I'll pay X for ANY Marksman", fillable by any holder of that model.
+   The contract enforces `tokenId == 0 || gunType == 0` (target a token OR a tier,
+   never both), so the two inputs are made mutually exclusive here rather than
+   letting the user discover it as a revert. */
+function initTierPicker(){
+  const sel=$("#offTier"), tok=$("#offTok");
+  if(!sel) return;
+  // the mass-produced tiers first, then the one-of-ones — a "tier" bid on a 1/1
+  // type is simply a bid on that unique gun, without needing to know its number
+  const order=[1,2,3,4,5,11,12,13,14,15,16].filter(t=>CAT[t]);
+  sel.innerHTML=`<option value="0">any gun — no specific model</option>`
+    + order.map(t=>`<option value="${t}">ANY ${CAT[t].name}${CAT[t].rarity?" · "+CAT[t].rarity:""}</option>`).join("");
+  const sync=()=>{
+    const tierOn = +sel.value !== 0;
+    const tokOn  = (tok.value||"").trim() !== "" && +tok.value !== 0;
+    tok.disabled = tierOn;  tok.style.opacity = tierOn ? .45 : 1;
+    sel.disabled = tokOn;   sel.style.opacity = tokOn  ? .45 : 1;
+    $("#offNote").textContent = tierOn
+      ? "Any holder of that model can sell into this bid."
+      : tokOn ? "Bidding on that one gun only."
+              : "Bid on one gun by number, or on a whole model — not both.";
+  };
+  sel.onchange=sync; tok.oninput=sync; sync();
+}
+
 async function makeOffer(){
   if(!signer) return connect();
   const raw=$("#offAmt").value;
@@ -1380,13 +1406,19 @@ async function makeOffer(){
   const rawTok=($("#offTok").value||"").trim();
   const tok=rawTok===""?0:Number(rawTok);
   if(!Number.isInteger(tok)||tok<0||tok>101) return toast("Gun # must be a whole number 0–101 (0 = any gun).");
+  const tier=Number(($("#offTier")||{}).value||0);
+  // the contract reverts on "target a token OR a tier, not both" — say so up front
+  if(tok!==0 && tier!==0) return toast("Pick one: a specific gun # OR a model — not both.");
   const v=parsePriceInput(raw);
   if(!v){ toast(String(raw||"").trim() ? `"${String(raw).trim()}" isn't an amount I can read — try 2000000, 2,000,000 or 2m.` : "Enter an offer amount in PLS."); return; }
   try{
     toast("Confirm the offer — your PLS goes into escrow…");
-    await (await sendOffer(tok, 0, ethers.parseEther(v))).wait();
-    toast(tok===0 ? "Standing offer live for any gun." : ("Offer live on gun #"+tok+"."));
-    $("#offAmt").value=""; $("#offTok").value="";
+    await (await sendOffer(tok, tier, ethers.parseEther(v))).wait();
+    toast(tier!==0 ? ("Standing offer live for ANY "+((CAT[tier]||{}).name||"gun of that model")+".")
+        : tok===0 ? "Standing offer live for any gun."
+        : ("Offer live on gun #"+tok+"."));
+    $("#offAmt").value=""; $("#offTok").value=""; if($("#offTier")) $("#offTier").value="0";
+    initTierPicker();                       // re-enable both inputs after the reset
     await refreshAll();
   }catch(e){ toast(e.shortMessage || e.reason || e.message || "offer failed"); }
 }
@@ -1598,6 +1630,7 @@ function init(){
   $("#connect").onclick=connect;
   $("#mint").onclick=mint;
   $("#offMake").onclick=makeOffer;
+  initTierPicker();
   // tabs
   document.querySelectorAll("#tabs button").forEach(b=>b.onclick=()=>showTab(b.dataset.tab));
   $("#fAll").onclick=()=>{ bidHoloOnly=false; $("#fAll").classList.add("on"); $("#fHolo").classList.remove("on"); renderBids(); };
