@@ -1,0 +1,7 @@
+.vercel
+.env*
+node_modules/
+out/secret-seed.json
+out/lb-backup-*.json
+.claude/
+*.log

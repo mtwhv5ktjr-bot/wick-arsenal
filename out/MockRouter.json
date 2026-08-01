@@ -1,0 +1,58 @@
+{
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "w",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "constructor"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "amountOutMin",
+          "type": "uint256"
+        },
+        {
+          "internalType": "address[]",
+          "name": "",
+          "type": "address[]"
+        },
+        {
+          "internalType": "address",
+          "name": "to",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "name": "swapExactETHForTokensSupportingFeeOnTransferTokens",
+      "outputs": [],
+      "stateMutability": "payable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "wick",
+      "outputs": [
+        {
+          "internalType": "contract MockWICK",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "bytecode": "0x60a034606e57601f61029f38819003918201601f19168301916001600160401b03831184841017607357808492602094604052833981010312606e57516001600160a01b03811690819003606e57608052604051610215908161008a823960805181818160b801526101b00152f35b600080fd5b634e487b7160e01b600052604160045260246000fdfe608080604052600436101561001357600080fd5b600090813560e01c908163035884511461019c575063b6f9de951461003757600080fd5b60803660031901126101995760243567ffffffffffffffff811161019757366023820112156101975780600401359067ffffffffffffffff821161014f57602490369260051b010111610199576044356001600160a01b03811690819003610197576103e834023481046103e81434151715610183576004358110610153577f00000000000000000000000000000000000000000000000000000000000000006001600160a01b031691839190833b1561014f576044908360405195869485936340c10f1960e01b8552600485015260248401525af180156101445761011b575080f35b67ffffffffffffffff81116101305760405280f35b634e487b7160e01b82526041600452602482fd5b6040513d84823e3d90fd5b8280fd5b60405162461bcd60e51b8152602060048201526008602482015267736c69707061676560c01b6044820152606490fd5b634e487b7160e01b83526011600452602483fd5b505b80fd5b9050346101975781600319360112610197577f00000000000000000000000000000000000000000000000000000000000000006001600160a01b03168152602090f3fea2646970667358221220e5470495d9a96366aa25af951c100824034de6b8158c5a5d48856ea1e0cb888764736f6c63430008230033",
+  "metadata": "{\"compiler\":{\"version\":\"0.8.35+commit.47b9dedd\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[{\"internalType\":\"address\",\"name\":\"w\",\"type\":\"address\"}],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"amountOutMin\",\"type\":\"uint256\"},{\"internalType\":\"address[]\",\"name\":\"\",\"type\":\"address[]\"},{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"swapExactETHForTokensSupportingFeeOnTransferTokens\",\"outputs\":[],\"stateMutability\":\"payable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"wick\",\"outputs\":[{\"internalType\":\"contract MockWICK\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"TestMocks.sol\":\"MockRouter\"},\"evmVersion\":\"paris\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[],\"viaIR\":true},\"sources\":{\"TestMocks.sol\":{\"keccak256\":\"0x11d2d762df7dd990ba845d1fe5ca55922c62b0acd4537a1c2a1c7ee9c7ed69c2\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://b810950543248c1d8d5436ed67f3216b37660ba919a0896c0a4ad4633927fda2\",\"dweb:/ipfs/QmTUn4yB3MAbLmztoQjRragPsXnt3QuxTg4LytDiJyP4ZP\"]}},\"version\":1}"
+}

@@ -1,0 +1,109 @@
+{
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "a",
+          "type": "address"
+        }
+      ],
+      "name": "balanceOf",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "to",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "id",
+          "type": "uint256"
+        }
+      ],
+      "name": "give",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "a",
+          "type": "address"
+        }
+      ],
+      "name": "gunsOfOwner",
+      "outputs": [
+        {
+          "internalType": "uint256[]",
+          "name": "ids",
+          "type": "uint256[]"
+        },
+        {
+          "internalType": "uint8[]",
+          "name": "types",
+          "type": "uint8[]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "from",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "to",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "id",
+          "type": "uint256"
+        }
+      ],
+      "name": "move",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "name": "ownerOf",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "bytecode": "0x60808060405234601557610547908161001b8239f35b600080fdfe608080604052600436101561001357600080fd5b60003560e01c90816325a888461461032f575080636352211e146102fb57806370a08231146102c1578063bb35783b1461011a5763f00388f71461005657600080fd5b346101155760403660031901126101155761006f610453565b6024356000818152602081905260409020546001600160a01b03166100e75760008181526020818152604080832080546001600160a01b0319166001600160a01b03909616958617905584835260018083528184208054868652600285529285209290925594909252929092526100e5916104e7565b005b60405162461bcd60e51b815260206004820152600660248201526565786973747360d01b6044820152606490fd5b600080fd5b3461011557606036600319011261011557610133610453565b6024356001600160a01b03811691908290036101155760443560008181526020819052604090205490916001600160a01b03908116911681900361028f57600052600160205260406000209181600052600260205260406000205483546000198101908111610279576101a690856104b9565b90549060031b1c6101d4816101bb84886104b9565b90919082549060031b91821b91600019901b1916179055565b60005260026020526040600020558254928315610263576100e59360001901906101fe82826104b9565b8154906000199060031b1b19169055558160005260006020526040600020816bffffffffffffffffffffffff60a01b825416179055806000526001602052604060002054826000526002602052604060002055600052600160205260406000206104e7565b634e487b7160e01b600052603160045260246000fd5b634e487b7160e01b600052601160045260246000fd5b60405162461bcd60e51b815260206004820152600a60248201526977726f6e672066726f6d60b01b6044820152606490fd5b34610115576020366003190112610115576001600160a01b036102e2610453565b1660005260016020526020604060002054604051908152f35b34610115576020366003190112610115576004356000526000602052602060018060a01b0360406000205416604051908152f35b34610115576020366003190112610115576001600160a01b03610350610453565b16600052600160205260406000209081548082526020820190819360005260206000209060005b81811061043d575050508161038d910382610469565b8051916103b261039c846104a1565b936103aa6040519586610469565b8085526104a1565b602084019190601f19013683376040519384936040850190604086525180915260608501929060005b8181106104245750505060209084830382860152519182815201919060005b818110610408575050500390f35b825160ff168452859450602093840193909201916001016103fa565b82518552879650602094850194909201916001016103db565b8254845260209093019260019283019201610377565b600435906001600160a01b038216820361011557565b90601f8019910116810190811067ffffffffffffffff82111761048b57604052565b634e487b7160e01b600052604160045260246000fd5b67ffffffffffffffff811161048b5760051b60200190565b80548210156104d15760005260206000200190600090565b634e487b7160e01b600052603260045260246000fd5b908154916801000000000000000083101561048b57826101bb91600161050f950181556104b9565b56fea26469706673582212208c117a531c4e599edb2f3e784a0bc2b4cd066454cd1787928ca612d2a0ceac8e64736f6c63430008230033",
+  "metadata": "{\"compiler\":{\"version\":\"0.8.35+commit.47b9dedd\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[{\"internalType\":\"address\",\"name\":\"a\",\"type\":\"address\"}],\"name\":\"balanceOf\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"id\",\"type\":\"uint256\"}],\"name\":\"give\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"a\",\"type\":\"address\"}],\"name\":\"gunsOfOwner\",\"outputs\":[{\"internalType\":\"uint256[]\",\"name\":\"ids\",\"type\":\"uint256[]\"},{\"internalType\":\"uint8[]\",\"name\":\"types\",\"type\":\"uint8[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"id\",\"type\":\"uint256\"}],\"name\":\"move\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"ownerOf\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"TestMocks.sol\":\"MockGuns\"},\"evmVersion\":\"paris\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[],\"viaIR\":true},\"sources\":{\"TestMocks.sol\":{\"keccak256\":\"0x11d2d762df7dd990ba845d1fe5ca55922c62b0acd4537a1c2a1c7ee9c7ed69c2\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://b810950543248c1d8d5436ed67f3216b37660ba919a0896c0a4ad4633927fda2\",\"dweb:/ipfs/QmTUn4yB3MAbLmztoQjRragPsXnt3QuxTg4LytDiJyP4ZP\"]}},\"version\":1}"
+}

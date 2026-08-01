@@ -1,0 +1,106 @@
+{
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "name": "balanceOf",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "decimals",
+      "outputs": [
+        {
+          "internalType": "uint8",
+          "name": "",
+          "type": "uint8"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "to",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "amt",
+          "type": "uint256"
+        }
+      ],
+      "name": "mint",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "name",
+      "outputs": [
+        {
+          "internalType": "string",
+          "name": "",
+          "type": "string"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "symbol",
+      "outputs": [
+        {
+          "internalType": "string",
+          "name": "",
+          "type": "string"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "to",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "amt",
+          "type": "uint256"
+        }
+      ],
+      "name": "transfer",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ],
+  "bytecode": "0x608080604052346015576102d2908161001b8239f35b600080fdfe6080604052600436101561001257600080fd5b60003560e01c806306fdde03146101e0578063313ce567146101c457806340c10f191461018457806370a082311461014a57806395d89b41146100df5763a9059cbb1461005e57600080fd5b346100da5760403660031901126100da57610077610279565b6024359033600052600060205260406000208054908382039182116100c4575560018060a01b031660005260006020526100b7604060002091825461028f565b9055602060405160018152f35b634e487b7160e01b600052601160045260246000fd5b600080fd5b346100da5760003660031901126100da57604051604081019080821067ffffffffffffffff831117610134576101309160405260058152646d5749434b60d81b602082015260405191829182610230565b0390f35b634e487b7160e01b600052604160045260246000fd5b346100da5760203660031901126100da576001600160a01b0361016b610279565b1660005260006020526020604060002054604051908152f35b346100da5760403660031901126100da576001600160a01b036101a5610279565b16600052600060205260406000206101c0602435825461028f565b9055005b346100da5760003660031901126100da57602060405160128152f35b346100da5760003660031901126100da57604051604081019080821067ffffffffffffffff831117610134576101309160405260088152674d6f636b5749434b60c01b6020820152604051918291825b91909160208152825180602083015260005b818110610263575060409293506000838284010152601f8019910116010190565b8060208092870101516040828601015201610242565b600435906001600160a01b03821682036100da57565b919082018092116100c45756fea264697066735822122012d485767ee79bddeceef1d8fe2f1d93cd05214dc87ae5b34cd624f0fe22e42a64736f6c63430008230033",
+  "metadata": "{\"compiler\":{\"version\":\"0.8.35+commit.47b9dedd\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"balanceOf\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"decimals\",\"outputs\":[{\"internalType\":\"uint8\",\"name\":\"\",\"type\":\"uint8\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amt\",\"type\":\"uint256\"}],\"name\":\"mint\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"name\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"symbol\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amt\",\"type\":\"uint256\"}],\"name\":\"transfer\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"TestMocks.sol\":\"MockWICK\"},\"evmVersion\":\"paris\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[],\"viaIR\":true},\"sources\":{\"TestMocks.sol\":{\"keccak256\":\"0x11d2d762df7dd990ba845d1fe5ca55922c62b0acd4537a1c2a1c7ee9c7ed69c2\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://b810950543248c1d8d5436ed67f3216b37660ba919a0896c0a4ad4633927fda2\",\"dweb:/ipfs/QmTUn4yB3MAbLmztoQjRragPsXnt3QuxTg4LytDiJyP4ZP\"]}},\"version\":1}"
+}

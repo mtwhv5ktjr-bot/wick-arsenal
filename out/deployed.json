@@ -1,0 +1,12 @@
+{
+  "chainId": 369,
+  "rpc": "https://rpc.pulsechain.com",
+  "bodies": "0x6d35456BE91af6101874A7365e97B2956F04bfbc",
+  "art": "0x7D35c83F02a7608Eb030Ad7cA8fd08fe961a678c",
+  "guns": "0x188848DdB42fA8Ca2EB05649c944e05dfA2158FD",
+  "market": "0x1457C17A7132fCbCb2034337368050563DeD91e3",
+  "mintPrice": "1000000000000000000000000",
+  "feeBps": 1500,
+  "mods": "0x004E6610ff47c6A6510DA446257822B37D26CD73",
+  "modsMarket": "0xDDb963D1bb874d4ac5697550F513568c657E977E"
+}
