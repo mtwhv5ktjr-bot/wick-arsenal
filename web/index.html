@@ -1155,7 +1155,10 @@ async function buyBillboard(){
     if(exTaken)return toast("That day was just taken exclusively — pick another.");
     if(exc&&Number(taken)>0)return toast("Exclusive needs an EMPTY day — this one already has rotation ads.");
     if(!exc&&Number(taken)>=8)return toast("That day just sold out — pick another.");
-    const price=exc?ethers.parseEther("10000000"):ethers.parseEther("1000000");
+    // ASK THE CONTRACT. buy() requires msg.value == PRICE_DAY exactly (not >=), so a
+    // hardcoded literal that ever drifts from the deployed constant would revert every
+    // purchase — the same hand-typed-value failure that made this tab dead on arrival.
+    const price=exc?await bbRO.PRICE_EXCLUSIVE():await bbRO.PRICE_DAY();
     const balWei=await provider.getBalance(account).catch(()=>null);
     if(balWei!==null&&balWei<price)return toast("Not enough PLS: this costs "+fmt(price)+" and the wallet holds "+fmt(balWei)+".");
     if(!confirm((exc?"EXCLUSIVE TAKEOVER — every billboard in PEPE WICK on ":"Rotation billboard in PEPE WICK on ")
