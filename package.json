@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "compile": "node compile.mjs",
-    "test": "node test.mjs",
+    "test": "node test.mjs && node qa-crypto.mjs && node test-mods.mjs && node test-mods-market.mjs && node test-billboards.mjs",
     "deploy": "node deploy.mjs"
   },
   "dependencies": {

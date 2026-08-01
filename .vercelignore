@@ -1,11 +1,31 @@
 node_modules
 contracts
 out
+# .gitignore covers git, NOT the uploader — .env.local holds a live
+# BLOB_READ_WRITE_TOKEN and must never leave this machine
+.env
+.env.*
+*.key
+*.pem
+# dev/deploy tooling: no secrets in them (the launchers prompt), but nothing
+# here belongs in a production bundle
 test.mjs
+test-*.mjs
+qa-crypto.mjs
+rehearsal.mjs
+rehearse-*.mjs
 compile.mjs
 deploy.mjs
+deploy-*.mjs
 extract.mjs
 serve.mjs
+reveal.mjs
+burn-pool.mjs
+sync-bodies.mjs
+clear-leaderboard.mjs
+bounty-winner.mjs
+*.cmd
+_helper-*.ps1
+*.md
 web/preview.html
 web/chain-preview.html
-*.key
