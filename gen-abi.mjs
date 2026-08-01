@@ -108,7 +108,11 @@ const dest = join(root, "web", "abi.js");
 if (process.argv.includes("--check")) {
   let current = "";
   try { current = readFileSync(dest, "utf8"); } catch {}
-  if (current !== out) {
+  // Compare CONTENT, not bytes: this repo has core.autocrlf=true, so git hands back
+  // CRLF on a Windows checkout while we generate LF. A byte-exact compare fails on
+  // every fresh clone and says "stale" when nothing has actually drifted.
+  const norm = s => s.replace(/\r\n/g, "\n");
+  if (norm(current) !== norm(out)) {
     console.error("✗ web/abi.js is STALE — the artifacts in out/ no longer match it.");
     console.error("  Run: node gen-abi.mjs   (then redeploy the site)");
     process.exit(1);
