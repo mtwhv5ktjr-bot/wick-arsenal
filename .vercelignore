@@ -29,3 +29,4 @@ _helper-*.ps1
 *.md
 web/preview.html
 web/chain-preview.html
+index.html.pre-redesign-backup
