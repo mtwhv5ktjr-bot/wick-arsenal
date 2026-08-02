@@ -392,6 +392,27 @@ window.gunCardSVG = function(t, id){
   if(holo)s+="<rect x='6' y='6' width='388' height='548' rx='22' fill='url(#foil)' opacity='.05'/>";
   return s+"</svg>";
 };
+/* Just the WEAPON — no card, no frame, no stats. The game's gunsmith bench needs
+   the gun big enough to see attachments bolted onto it, and its own in-engine
+   vector guns were drawn to be read at ~0.6x in a fist: blown up they are blobs.
+   Same BODY / OV / PAL the card uses, so the bench and the NFT are the same
+   object rather than two drawings of it. */
+window.gunBodySVG = function(t){
+  const p = PAL[t] || PAL[1], ac = p[2];
+  const defs =
+    "<linearGradient id='b' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='"+p[0]+"'/><stop offset='1' stop-color='"+p[1]+"'/></linearGradient>"+
+    "<linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#2b323d'/><stop offset='1' stop-color='#14181f'/></linearGradient>"+
+    "<linearGradient id='w' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#4a3524'/><stop offset='1' stop-color='#241a10'/></linearGradient>"+
+    "<linearGradient id='a' x1='0' y1='0' x2='1' y2='0'><stop offset='0' stop-color='"+ac+"'/><stop offset='1' stop-color='"+ac+"'/></linearGradient>"+
+    "<linearGradient id='met' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='#eef2f8'/><stop offset='.18' stop-color='#9aa6b6'/><stop offset='.5' stop-color='#3d4653'/><stop offset='.82' stop-color='#697485'/><stop offset='1' stop-color='#20262f'/></linearGradient>";
+  // viewBox frames the weapon itself; the bodies are drawn facing right inside 400x400
+  return "<svg xmlns='http://www.w3.org/2000/svg' viewBox='38 128 330 168'><defs>"+defs+"</defs>"+
+         (BODY[t]||PISTOL)+(OV[t]||"")+"</svg>";
+};
+window.gunBodyURI = function(t){
+  return "data:image/svg+xml;base64,"+btoa(unescape(encodeURIComponent(window.gunBodySVG(t))));
+};
+
 // back-compat: everything renders the trading card now
 window.gunArtSVG = function(t,id){ return window.gunCardSVG(t,id); };
 window.gunArtURI = function(t,id){
