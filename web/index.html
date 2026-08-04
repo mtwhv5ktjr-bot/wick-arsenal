@@ -277,6 +277,7 @@ tbody tr:hover{background:#111823}
     <button data-tab="tMarket">Market</button>
     <button data-tab="tBids">Bids</button>
     <button data-tab="tSales">Sales</button>
+    <button data-tab="tLegacy" id="tabLegacyBtn">v1 Listings</button>
     <button data-tab="tAds" id="tabAdsBtn" style="display:none">Advertise</button>
     <button data-tab="tMine">Arsenal</button>
     <button data-tab="tBoard">Leaderboard</button>
@@ -295,6 +296,24 @@ tbody tr:hover{background:#111823}
    <div class="heroL">
     <div class="burn" id="heroBurn">🔥 SOLD OUT — <b>100 CASES</b> AT <b>1,000,000 PLS</b> EACH</div>
     <p id="heroProse" class="muted">101 on-chain guns on PulseChain. Every one is a real weapon inside PEPE WICK, and every sale burns 15% into $WICK in the same transaction.</p>
+
+    <!-- KJP GEAR sits ABOVE the free mods mint: it is the paid drop, it is
+         live now, and every sale burns KJP and WICK in the same transaction.
+         Reads supply straight off the contract; hides itself if the chain is
+         unreachable rather than showing a dead panel. -->
+    <div id="gearPanel" style="margin-top:14px;padding:16px;border:1px solid #8a6d2f;border-radius:12px;text-align:left;background:rgba(255,210,124,.06)">
+      <div style="font:900 15px Arial Black;color:#ffd27c;letter-spacing:.5px">KJP GEAR — FIELD ISSUE</div>
+      <div class="muted" style="margin:6px 0 10px">
+        100 pieces of cross-game equipment — suppressors, kevlar, night optics, a skeleton key.
+        Works in <b>PEPE WICK</b> and <b>KJP</b>. <b>1,000,000 PLS</b> each.
+        Every mint burns <b>50% KJP</b> + <b>50% WICK</b> in the mint transaction — there is no withdraw function.
+      </div>
+      <div class="row" style="flex-wrap:wrap;align-items:center">
+        <a class="primary" href="https://kjp-game.wick.pics/mint"
+           style="text-decoration:none;padding:10px 18px;border-radius:8px;display:inline-block">MINT KJP GEAR ↗</a>
+        <span id="gearLeft" class="muted">reading the chain…</span>
+      </div>
+    </div>
 
     <div id="modsPanel" style="display:none;margin-top:14px;padding:14px;border:1px dashed var(--green);border-radius:12px;text-align:left">
       <div id="modsPool" class="muted" style="margin:0 0 10px"></div>
@@ -362,6 +381,7 @@ tbody tr:hover{background:#111823}
     </div>
     <div id="market" class="grid"></div>
     <div id="marketEmpty" class="muted">No guns listed for sale right now.</div>
+    <div id="v1Nudge" class="muted" style="display:none;margin-top:10px"></div>
 
     <h2 style="margin-top:26px">Mod Listings</h2>
     <p class="muted">Attachments on the secondary market. <b>50% of every mod sale is burned as $WICK.</b></p>
@@ -384,6 +404,17 @@ tbody tr:hover{background:#111823}
     <div id="salesWrap"><table id="sales" class="tbl"></table></div>
     <div id="salesEmpty" class="muted">No sales yet — the market is brand new.</div>
     <p class="muted" style="margin-top:12px">Every sale burns <b>15%</b> of its price into $WICK in the same transaction. <span id="salesBurn"></span></p>
+  </section>
+
+  <section id="tLegacy" class="tab">
+    <h2>v1 Listings</h2>
+    <p class="muted">The marketplace was upgraded on 1 Aug. Guns listed on the <b>old (v1)</b> contract are still
+      listed there — they just aren't shown on the main Market tab, which reads v2. They are safe: v1 never took
+      custody, so the gun is still in the seller's wallet. <b>Sellers:</b> cancel here, then relist on the new market.
+      <b>Buyers:</b> these are live and purchasable.</p>
+    <div id="legacyWrap"><div id="legacy" class="grid"></div></div>
+    <div id="legacyEmpty" class="muted">Checking the old contract…</div>
+    <p class="muted" style="margin-top:12px" id="legacyNote"></p>
   </section>
 
   <section id="tAds" class="tab">
@@ -428,6 +459,9 @@ tbody tr:hover{background:#111823}
     <h2 id="modsHdr" style="display:none;margin-top:26px">Your Mods</h2>
     <div id="modsHint" class="muted" style="display:none"></div>
     <div id="modsGrid" class="grid"></div>
+    <h2 id="gearHdr" style="display:none;margin-top:26px">Your KJP Gear</h2>
+    <div id="gearHint" class="muted" style="display:none"></div>
+    <div id="gearGrid" class="grid"></div>
   </section>
 
   <section id="tBoard" class="tab">
@@ -526,6 +560,28 @@ const BB_ABI=[
 ];
 const bbConfigured=()=>cfg.billboards&&!/^0x0{40}$/i.test(cfg.billboards);
 let bbRO=null, bbC=null;
+const GEAR_ABI=[
+  "function balanceOf(address) view returns (uint256)",
+  "function ownerOf(uint256) view returns (address)",
+  "function totalSupply() view returns (uint256)",
+  "function gearOfOwner(address) view returns (uint256[] ids, uint8[] types)",
+  "function setApprovalForAll(address,bool)",
+  "function isApprovedForAll(address,address) view returns (bool)",
+  "function transferFrom(address,address,uint256)"
+];
+const GEAR_MARKET_ABI=[
+  "function listings(uint256) view returns (address seller, uint256 price)",
+  "function list(uint256,uint256)",
+  "function delist(uint256)",
+  "function buy(uint256) payable",
+  "function makeOffer(uint256,uint8) payable returns (uint256)",
+  "function cancelOffer(uint256)",
+  "function acceptOffer(uint256,uint256)",
+  "function ROYALTY_BPS() view returns (uint256)"
+];
+const gearConfigured   = ()=>cfg.gear       && !/^0x0{40}$/.test(cfg.gear);
+const gearMktConfigured= ()=>cfg.gearMarket && !/^0x0{40}$/.test(cfg.gearMarket);
+let gearRO=null, gearMktRO=null, gearC=null, gearMktC=null;
 const MODS_MARKET_ABI=[
   "function list(uint256 id, uint256 price)",
   "function cancel(uint256 id)",
@@ -551,6 +607,8 @@ function readOnly(){
     gunsRO=new ethers.Contract(cfg.guns,GUNS_ABI,p); marketRO=new ethers.Contract(cfg.market,MARKET_ABI,p);
     if(modsConfigured())modsRO=new ethers.Contract(cfg.mods,MODS_ABI,p);
     if(modsMktConfigured())modsMktRO=new ethers.Contract(cfg.modsMarket,MODS_MARKET_ABI,p);
+    if(gearConfigured())gearRO=new ethers.Contract(cfg.gear,GEAR_ABI,p);
+    if(gearMktConfigured())gearMktRO=new ethers.Contract(cfg.gearMarket,GEAR_MARKET_ABI,p);
     if(bbConfigured())bbRO=new ethers.Contract(cfg.billboards,BB_ABI,p);
   }
   return { gunsRO, marketRO, modsRO, modsMktRO };
@@ -607,6 +665,8 @@ async function connect(){
     market = new ethers.Contract(cfg.market, MARKET_ABI, signer);
     if(modsConfigured())modsC = new ethers.Contract(cfg.mods, MODS_ABI, signer);
     if(modsMktConfigured())modsMktC = new ethers.Contract(cfg.modsMarket, MODS_MARKET_ABI, signer);
+    if(gearConfigured())gearC = new ethers.Contract(cfg.gear, GEAR_ABI, signer);
+    if(gearMktConfigured())gearMktC = new ethers.Contract(cfg.gearMarket, GEAR_MARKET_ABI, signer);
     if(bbConfigured())bbC = new ethers.Contract(cfg.billboards, BB_ABI, signer);
     $("#connect").textContent = account.slice(0,6)+"…"+account.slice(-4);
     const net = await provider.getNetwork();
@@ -818,7 +878,7 @@ async function loadArsenal(){
   box.querySelectorAll("[data-cancel]").forEach(b=>b.onclick=()=>cancelGun(+b.dataset.cancel));
   box.querySelectorAll("[data-send]").forEach(b=>b.onclick=()=>sendGun(+b.dataset.send));
   showApprovalState();
-  loadMyMods();
+  loadMyMods(); loadMyGear();
 }
 
 // the mods half of YOUR ARSENAL — separate so a mods hiccup never blanks the guns
@@ -931,6 +991,72 @@ function renderModMarket(){
   }).join("");
   box.querySelectorAll("[data-modbuy]").forEach(b=>b.onclick=()=>buyMod(+b.dataset.modbuy,BigInt(b.dataset.price)));
   box.querySelectorAll("[data-modcancel2]").forEach(b=>b.onclick=()=>cancelMod(+b.dataset.modcancel2));
+}
+
+
+/* ---------------- KJP GEAR: the 100-piece cross-game FIELD ISSUE ----------------
+   Mirrors the mods half, including the rule that a gear hiccup must never blank
+   the guns. Every piece works in BOTH games — it rides the operative, not the
+   gun, so there are no slots to manage. */
+let gearTypeCache={};
+async function loadMyGear(){
+  const grid=$("#gearGrid"), hdr=$("#gearHdr"), hint=$("#gearHint");
+  if(!grid)return;
+  const hide=()=>{ grid.innerHTML=""; hdr.style.display="none"; hint.style.display="none"; };
+  if(!gearConfigured()||!account){ hide(); return; }
+  try{
+    const [ids,types]=await gearRO.gearOfOwner(account);
+    if(!ids.length){ hide(); return; }
+    hdr.style.display="block"; hint.style.display="block";
+    hint.textContent="Live in KJP and PEPE WICK automatically — no slots, no limit. Resale burns 15%: half KJP, half WICK.";
+    const lst = gearMktRO ? await Promise.all([...ids].map(id=>gearMktRO.listings(Number(id)).catch(()=>[ZERO,0n]))) : [...ids].map(()=>[ZERO,0n]);
+    grid.innerHTML=[...ids].map((id,i)=>{
+      const t=Number(types[i]); id=Number(id); gearTypeCache[id]=t;
+      const seller=lst[i][0], price=lst[i][1];
+      const listed = seller!==ZERO && price>0n;
+      const sell = !gearMktRO ? "" : (listed
+        ? '<div class="row"><span class="muted">Listed: '+fmt(price)+' PLS</span><button data-gearcancel="'+id+'">CANCEL</button></div>'
+        : '<div class="row"><input type="text" id="gp'+id+'" placeholder="price in PLS"><button data-gearlist="'+id+'">SELL</button></div>');
+      return gearCardHTML(t,id,sell);
+    }).join("");
+    grid.querySelectorAll("[data-gearlist]").forEach(b=>b.onclick=()=>listGear(+b.dataset.gearlist));
+    grid.querySelectorAll("[data-gearcancel]").forEach(b=>b.onclick=()=>cancelGear(+b.dataset.gearcancel));
+  }catch(e){ hide(); }
+}
+function gearCardHTML(type,id,actions){
+  const g=(window.WICK_GEAR||{})[type]||{name:"GEAR #"+id,rarity:"?",color:"#8a93a5",fx:"unknown",pool:0};
+  return '<div class="card" style="border-color:'+g.color+'">'
+    + '<div style="padding:12px;text-align:center">'
+    + '<div style="font-size:11px;letter-spacing:2px;color:'+g.color+'">KJP GEAR &middot; '+g.rarity.toUpperCase()+'</div>'
+    + '<div style="font-family:Impact,Arial,sans-serif;font-size:21px;color:#fff;margin:8px 0 2px">'+g.name+'</div>'
+    + '<div class="muted" style="font-size:12px;margin-bottom:8px">'+g.fx+'</div>'
+    + '<div class="muted" style="font-size:11px">#'+id+' / 100 &middot; '+g.pool+' of this type &middot; works in <b>both games</b></div>'
+    + '</div><div style="padding:0 12px 12px">'+(actions||"")+'</div></div>';
+}
+async function ensureGearMktApproval(){
+  if(await gearC.isApprovedForAll(account, cfg.gearMarket)) return;
+  toast("Approving the market to move your gear…");
+  await (await gearC.setApprovalForAll(cfg.gearMarket, true)).wait();
+}
+async function listGear(id){
+  try{
+    const el=document.getElementById("gp"+id);
+    const raw=el?el.value:"";
+    let priceWei; try{ priceWei=ethers.parseEther(String(raw).trim()); }catch(e){ return toast("Enter a price in PLS."); }
+    if(priceWei<=0n) return toast("Enter a price in PLS.");
+    const g=(window.WICK_GEAR||{})[gearTypeCache[id]]||{name:"Gear #"+id};
+    const roy=priceWei*15n/100n;
+    if(!confirm("List "+g.name+" (gear #"+id+") for "+fmt(priceWei)+" PLS?\n\n"
+      +"RESALE DEAL: a 15% royalty is burned automatically — half buys & burns KJP, half buys & burns WICK.\n"
+      +"You receive "+fmt(priceWei-roy)+" PLS when it sells.")) return;
+    await ensureGearMktApproval();
+    await (await gearMktC.list(id, priceWei)).wait();
+    toast("Listed."); await loadMyGear();
+  }catch(e){ toast("List failed: "+(e.shortMessage||e.message||e)); }
+}
+async function cancelGear(id){
+  try{ await (await gearMktC.delist(id)).wait(); toast("Listing cancelled."); await loadMyGear(); }
+  catch(e){ toast("Cancel failed: "+(e.shortMessage||e.message||e)); }
 }
 
 /* ---------------- WICK MODS: free-mint attachments ---------------- */
@@ -1378,6 +1504,113 @@ async function buyBillboard(){
     await loadAdvertise();
   }catch(e){ toast(e.shortMessage||e.reason||e.message||"purchase failed"); }
 }
+
+/* ---------------- v1 (legacy) marketplace ----------------
+   cfg.marketOld holds listings made before the 1 Aug upgrade. The market is
+   approval-based — it never escrows the NFT — so nothing is trapped; the
+   listings are simply invisible because the app reads cfg.market (v2).
+   A listing is only BUYABLE if the seller still owns the gun AND the old
+   market is still approved for it. Anything else is shown as un-buyable
+   rather than given a button that is guaranteed to revert. */
+let legacyRO=null, legacyC=null, legacyRows=null;
+const legacyConfigured=()=>cfg.marketOld&&!/^0x0{40}$/i.test(cfg.marketOld)&&cfg.marketOld.toLowerCase()!==String(cfg.market||"").toLowerCase();
+function legacyRead(){
+  if(!legacyRO&&legacyConfigured()){
+    const p=new ethers.JsonRpcProvider(cfg.rpcRead||cfg.chain.rpc, cfg.chain.id, {staticNetwork:true, batchMaxCount:20});
+    legacyRO=new ethers.Contract(cfg.marketOld, MARKET_ABI, p);
+  }
+  return legacyRO;
+}
+async function loadLegacy(force){
+  const box=$("#legacy"), empty=$("#legacyEmpty"), note=$("#legacyNote");
+  if(!legacyConfigured()){ box.innerHTML=""; empty.textContent="No previous marketplace to show."; empty.style.display="block"; return; }
+  const ro=legacyRead(), { gunsRO }=readOnly();
+  if(legacyRows&&!force) return renderLegacy();
+  empty.textContent="Reading the old contract…"; empty.style.display="block"; box.innerHTML="";
+  const raw=await Promise.all(Array.from({length:101},(_,i)=>
+    ro.getListing(i+1).then(r=>({id:i+1,seller:r[0],price:r[1]})).catch(()=>({id:i+1,err:true}))));
+  if(raw.some(r=>r.err)){ empty.textContent="Couldn't reach the PulseChain node — refresh to retry."; return; }
+  let res=raw.filter(l=>l.seller!==ZERO&&l.price>0n);
+  if(!res.length){ legacyRows=[]; return renderLegacy(); }
+  // buyable == seller still owns it AND v1 still has approval
+  const own=await Promise.all(res.map(l=>gunsRO.ownerOf(l.id).catch(()=>null)));
+  const apr=await Promise.all(res.map(l=>gunsRO.getApproved(l.id).catch(()=>null)));
+  const all=await Promise.all(res.map((l,i)=>own[i]?gunsRO.isApprovedForAll(own[i],cfg.marketOld).catch(()=>false):false));
+  const types=await Promise.all(res.map(l=>gunsRO.gunTypeOf(l.id).then(Number).catch(()=>0)));
+  legacyRows=res.map((l,i)=>({...l, type:types[i], owner:own[i],
+    buyable: !!own[i] && own[i].toLowerCase()===l.seller.toLowerCase() &&
+             ((apr[i]||"").toLowerCase()===cfg.marketOld.toLowerCase() || all[i]===true) }));
+  renderLegacy();
+}
+function renderLegacy(){
+  const box=$("#legacy"), empty=$("#legacyEmpty"), note=$("#legacyNote");
+  const rows=(legacyRows||[]).slice().sort((a,b)=>Number(a.price-b.price));
+  if(!rows.length){ box.innerHTML=""; empty.textContent="Nothing is listed on the old contract."; empty.style.display="block"; note.textContent=""; return; }
+  empty.style.display="none";
+  const me=(account||"").toLowerCase();
+  const mine=rows.filter(r=>r.seller.toLowerCase()===me).length;
+  note.innerHTML = rows.length+" listing"+(rows.length>1?"s":"")+" on the old contract"+
+    (mine?" · <b>"+mine+" of them yours</b>":"")+
+    " · contract <a href=\""+cfg.chain.explorer+"/address/"+cfg.marketOld+"\" target=\"_blank\" rel=\"noopener\">"+
+    cfg.marketOld.slice(0,10)+"…</a>";
+  box.innerHTML = rows.map(r=>{
+    const g=WICK_GUNS[r.type]||{name:"Gun #"+r.id,rarity:"",color:"#cfd6e0"};
+    const isMine=r.seller.toLowerCase()===me;
+    const act = isMine
+      ? '<button data-lcancel="'+r.id+'">CANCEL LISTING</button>'
+      : (r.buyable ? '<button class="primary" data-lbuy="'+r.id+'">BUY '+fmt(r.price)+' PLS</button>'
+                   : '<button disabled title="The seller no longer owns this gun, or removed the old market\'s approval — this listing cannot complete.">UNAVAILABLE</button>');
+    return '<div class="card'+(g.holo?" holo":"")+'">'+
+      '<div class="art">'+artFor(r.type,r.id)+'</div>'+
+      '<div class="body"><div class="nm">'+g.name+'</div>'+
+      '<div class="rr" style="color:'+g.color+'">#'+r.id+' · '+(g.rarity||"")+'</div>'+
+      '<div class="bl">'+fmt(r.price)+' PLS'+(isMine?" · your listing":"")+'</div>'+
+      act+'</div></div>';
+  }).join("");
+  box.querySelectorAll("[data-lbuy]").forEach(b=>b.onclick=()=>legacyBuy(+b.dataset.lbuy));
+  box.querySelectorAll("[data-lcancel]").forEach(b=>b.onclick=()=>legacyCancel(+b.dataset.lcancel));
+}
+async function legacyBuy(id){
+  if(!signer) return connect();
+  const row=(legacyRows||[]).find(r=>r.id===id); if(!row) return;
+  if(!confirm("Buy gun #"+id+" from the OLD (v1) marketplace for "+fmt(row.price)+" PLS?\n\n"+
+              "Same 15% royalty, burned as $WICK in the same transaction.")) return;
+  try{
+    const c=new ethers.Contract(cfg.marketOld, MARKET_ABI, signer);
+    toast("Confirm in your wallet…");
+    await (await sendBuffered(c,"buy",[id],{value:row.price})).wait();
+    toast("Bought gun #"+id+" from the old market.");
+    legacyRows=null; loadLegacy(true); refreshStats();
+  }catch(e){ toast(e.shortMessage||e.reason||e.message||"purchase failed"); }
+}
+async function legacyCancel(id){
+  if(!signer) return connect();
+  if(!confirm("Cancel your v1 listing for gun #"+id+"?\n\n"+
+              "The gun never left your wallet. After this you can list it on the new marketplace.")) return;
+  try{
+    const c=new ethers.Contract(cfg.marketOld, MARKET_ABI, signer);
+    toast("Confirm in your wallet…");
+    await (await sendBuffered(c,"cancel",[id])).wait();
+    toast("Cancelled. You can now list gun #"+id+" on the new market.");
+    legacyRows=null; loadLegacy(true);
+  }catch(e){ toast(e.shortMessage||e.reason||e.message||"cancel failed"); }
+}
+/* point sellers at the old tab from the main market, but only if v1 really has rows */
+async function checkLegacyNudge(){
+  try{
+    if(!legacyConfigured())return;
+    const ro=legacyRead();
+    const raw=await Promise.all(Array.from({length:101},(_,i)=>ro.getListing(i+1).then(r=>r[0]).catch(()=>ZERO)));
+    const n=raw.filter(a=>a!==ZERO).length;
+    const el=$("#v1Nudge"); if(!el)return;
+    if(n){ el.style.display="block";
+      el.innerHTML="⚠ "+n+" gun"+(n>1?"s are":" is")+" still listed on the <b>previous marketplace</b> and won't show here. "+
+        "<a href=\"#\" id=\"v1Jump\">Open the v1 Listings tab →</a>";
+      const j=$("#v1Jump"); if(j)j.onclick=e=>{e.preventDefault();showTab("tLegacy");};
+    }
+  }catch(e){}
+}
+
 function showTab(id){
   document.querySelectorAll(".tab").forEach(s=>s.classList.toggle("on",s.id===id));
   document.querySelectorAll("#tabs button").forEach(b=>b.classList.toggle("on",b.dataset.tab===id));
@@ -1388,7 +1621,9 @@ function showTab(id){
   if(hero) hero.style.display = (id==="tCollection") ? "" : "none";
   window.scrollTo(0,0);
   if(id==="tBids")loadBids();
-  if(id==="tSales")loadSales();                       // log scan is slow — only when the tab is opened
+  if(id==="tMarket")checkLegacyNudge();
+  if(id==="tSales")loadSales();
+  if(id==="tLegacy")loadLegacy();                       // log scan is slow — only when the tab is opened
   if(id==="tAds")loadAdvertise();
   if(id==="tMine")showApprovalState();
   try{ history.replaceState(null,"","#"+id.slice(1).toLowerCase()); }catch(e){}
@@ -1799,6 +2034,29 @@ function init(){
   }
 }
 init();
+
+/* ---- KJP GEAR panel: live supply, read straight off PulseChain.
+   Deliberately standalone — it must not depend on the wallet being connected
+   or on this page's ethers setup, and a dead RPC must degrade to a quiet
+   panel rather than a broken one. ---- */
+(async function gearPanel(){
+  const GEAR = "0x6BdED56bA6F0d8062e056062D47F41ac735d5d10";
+  const el = document.getElementById("gearLeft");
+  if (!el) return;
+  try{
+    const r = await fetch("https://rpc.pulsechain.com", {
+      method: "POST", headers: { "content-type": "application/json" },
+      body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "eth_call",
+        params: [{ to: GEAR, data: "0x18160ddd" }, "latest"] })          // totalSupply()
+    });
+    const j = await r.json();
+    const minted = parseInt(j.result, 16);
+    if (!isFinite(minted)) throw new Error("bad read");
+    const left = 100 - minted;
+    el.textContent = left > 0 ? (left + " of 100 left") : "SOLD OUT";
+    el.style.color = left > 0 ? "#ffd27c" : "#ff8f8f";
+  }catch(e){ el.textContent = ""; }
+})();
 
 </script>
 </body></html>
