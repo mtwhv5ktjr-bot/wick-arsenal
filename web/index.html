@@ -315,10 +315,10 @@ tbody tr:hover{background:#111823}
     <div class="burn" id="heroBurn">🔥 GUNS SOLD OUT — <b>KJP GEAR</b> IS LIVE, <b>1,000,000 PLS</b></div>
     <p id="heroProse" class="muted">101 on-chain guns on PulseChain, every one a real weapon inside PEPE WICK. The guns are gone — trade them below. <b>KJP GEAR</b> is the drop that is still open.</p>
 
-    <!-- KJP GEAR sits ABOVE the free mods mint: it is the paid drop, it is
-         live now, and every sale burns KJP and WICK in the same transaction.
-         Reads supply straight off the contract; hides itself if the chain is
-         unreachable rather than showing a dead panel. -->
+    <!-- KJP GEAR is now the ONLY open drop on this page (the gun mint sold out,
+         the mods free mint is closed). Every sale burns KJP and WICK in the same
+         transaction. Reads supply straight off the contract; hides itself if the
+         chain is unreachable rather than showing a dead panel. -->
     <div id="gearPanel" style="margin-top:14px;padding:16px;border:1px solid #8a6d2f;border-radius:12px;text-align:left;background:rgba(255,210,124,.06)">
       <div style="font:900 15px Arial Black;color:#ffd27c;letter-spacing:.5px">KJP GEAR — FIELD ISSUE</div>
       <div class="muted" style="margin:6px 0 10px">
@@ -333,15 +333,11 @@ tbody tr:hover{background:#111823}
       </div>
     </div>
 
-    <div id="modsPanel" style="display:none;margin-top:14px;padding:14px;border:1px dashed var(--green);border-radius:12px;text-align:left">
-      <div id="modsPool" class="muted" style="margin:0 0 10px"></div>
-      <div class="row" style="flex-wrap:wrap">
-        <select id="modsQty"><option value="1">1 mod</option><option value="2">2 mods</option><option value="3" selected>3 mods</option></select>
-        <button id="modsMint" class="primary">MINT 3 FREE</button>
-        <span id="modsNote" class="muted"></span>
-      </div>
-      <div id="modsLeft" class="muted" style="margin-top:8px"></div>
-    </div>
+    <!-- The WICK MODS free mint is CLOSED and its panel is gone. Mods themselves
+         are untouched: holders still see them in ARSENAL, can send them, and can
+         trade them in MOD LISTINGS. Unlike the sold-out gun mint above, nothing
+         else writes to these nodes, so they are deleted rather than hidden —
+         loadModsPanel/syncModsBtn/mintMods went with them. -->
 
     <div id="cfgWarn" class="banner" style="display:none"></div>
 
@@ -1329,50 +1325,10 @@ async function acceptGearOffer(id){
   }catch(e){ toast("Accept failed: "+(e.shortMessage||e.message||e)); }
 }
 
-/* ---------------- WICK MODS: free-mint attachments ---------------- */
-async function loadModsPanel(){
-  const panel=$("#modsPanel"); if(!panel||!modsConfigured())return;
-  panel.style.display="block";
-  try{
-    const { modsRO }=readOnly();
-    const [tot,open,pool]=await Promise.all([modsRO.totalSupply(),modsRO.mintOpen(),modsRO.poolLeft()]);
-    const left=300-Number(tot);
-    $("#modsLeft").innerHTML="<b>"+left+" / 300</b> left.";
-    $("#modsPool").innerHTML=[1,2,3,4,5,6].map(t=>{ const m=WICK_MODS[t];
-      return "<span style='color:"+m.color+"'>"+m.name+" "+Number(pool[t])+"</span>"; }).join(" · ");
-    const btn=$("#modsMint"), note=$("#modsNote"), qtySel=$("#modsQty");
-    if(!open||left<=0){ btn.disabled=true; note.textContent=left<=0?"minted out — trade or ask a holder":"mint paused"; return; }
-    if(!account){ btn.disabled=false; note.textContent="connect a wallet holding a WICK gun to mint"; return; }
-    // the gun gate: allowance = 3 × guns held, minus what those guns already minted
-    const [allow, gunCount]=await Promise.all([
-      modsRO.allowanceOf(account).then(Number),
-      readOnly().gunsRO.balanceOf(account).then(Number).catch(()=>null)]);
-    if(gunCount===0){ btn.disabled=true; note.innerHTML="you need a <b>WICK Arsenal gun</b> to mint — grab one on the MARKETPLACE tab"; return; }
-    if(allow<=0){ btn.disabled=true; note.textContent="your gun"+(gunCount>1?"s have":" has")+" used all "+(gunCount*3)+" mint"+(gunCount*3>1?"s":"")+" — no holding cap though: buy more in MOD LISTINGS"; return; }
-    btn.disabled=false;
-    note.textContent=(gunCount!=null?gunCount+" gun"+(gunCount>1?"s":"")+" → ":"")+allow+" free mint"+(allow>1?"s":"")+" available";
-    // qty options grow with the allowance (contract caps a tx at 30)
-    const max=Math.min(allow, 30, left);
-    qtySel.innerHTML=Array.from({length:max},(_,i)=>`<option value="${i+1}">${i+1} mod${i?"s":""}</option>`).join("");
-    qtySel.value=String(Math.min(3,max));
-    qtySel.onchange=syncModsBtn; syncModsBtn();
-  }catch(e){ $("#modsLeft").textContent="(couldn't read the mods contract — refresh)"; }
-}
-function syncModsBtn(){ const s=$("#modsQty"), b=$("#modsMint"); if(s&&b&&!b.disabled)b.textContent="MINT "+s.value+" FREE"; }
-async function mintMods(){
-  if(!signer) return connect();
-  if(!modsC) return toast("Mods contract not configured yet.");
-  const qty=Math.max(1,Math.min(30,+$("#modsQty").value||1));   // contract caps a tx at 30 (10 guns' worth)
-  try{
-    await ensureChain();
-    toast("Confirm in your wallet — the mint itself is FREE (gas only)…");
-    // sendBuffered matters here: type-draw randomness makes the gas estimate
-    // variable, exactly like the gun mint (the 30M-PLS lesson)
-    await (await sendBuffered(modsC,"mint",[qty])).wait();
-    toast("Minted "+qty+" mod"+(qty>1?"s":"")+"! Fit them to a gun in the in-game 🔧 GUNSMITH — one gun each.");
-    await loadModsPanel(); await loadArsenal();
-  }catch(e){ toast(e.shortMessage||e.reason||e.message||"mint failed"); }
-}
+/* ---------------- WICK MODS ----------------
+   The free mint is removed. loadModsPanel/syncModsBtn/mintMods lived here and
+   were the only readers of the mods mint ABI calls (mintOpen/poolLeft/
+   allowanceOf); everything below is ownership and trading, which stays. */
 // simple card for a mod (no gunart SVG needed — the on-chain art mirrors this)
 function modCardHTML(type,id,actions){
   const m=WICK_MODS[type]||{name:"MOD #"+id,rarity:"?",color:"#8a93a5",fx:"unknown"};
@@ -2262,7 +2218,7 @@ async function refreshAll(){
   modMarketRows=null;
   /* money the old contract still holds for this wallet — checked every refresh,
      because it is the one thing a user must never have to go looking for */
-  const jobs=[loadArsenal(), loadMarket(true), loadOffers(), loadModsPanel(), loadModMarket(true), loadV1Escrow()];
+  const jobs=[loadArsenal(), loadMarket(true), loadOffers(), loadModMarket(true), loadV1Escrow()];
   if(document.getElementById("tBids")?.classList.contains("on")) jobs.push(loadBids(true));
   // the log scan costs ~3s; only pay it if the tab is actually on screen
   if(document.getElementById("tSales")?.classList.contains("on")) jobs.push(loadSales());
@@ -2315,9 +2271,7 @@ function init(){
     $("#offMake").textContent="OFFERS OPEN AT LAUNCH";
   } else { refreshStats().catch(()=>{}); loadMarket().catch(()=>{}); }
   loadOffers().catch(()=>{});
-  loadModsPanel().catch(()=>{});
   loadModMarket().catch(()=>{});
-  const mm=$("#modsMint"); if(mm)mm.onclick=mintMods;
   // 📺 stays INVISIBLE until the contract is wired (post-testing). ?ads=1 = crew door,
   // and ?ads=1&bb=0x… points the hidden tab at a live contract for prod E2E — the
   // public config stays zeroed until testing signs off.
